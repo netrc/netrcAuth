@@ -55,7 +55,11 @@ const main = async () => {
   app.get('/rubbings/:id?', idHandler(db,'rubbings'))
   app.get('/pictures/:id?', idHandler(db,'pictures'))
 
-  app.listen(port, '0.0.0.0');
+  const server = app.listen(port, '0.0.0.0');
+
+  process.on('SIGTERM', () => {
+    server.close( () => { console.log('SIGTERM received: server closed') })
+  })
 }
 
 main()
