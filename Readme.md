@@ -34,6 +34,7 @@ n.b. https://stackoverflow.com/questions/70903418/how-to-get-async-await-work-in
 
 Record looks like
 
+```
 { // this is a picture record
   id: 'rec0JHggGl52XeaEv',
 
@@ -79,3 +80,4 @@ Record looks like
   updateFields: [Function (anonymous)],
   replaceFields: [Function (anonymous)]
 }
+```
