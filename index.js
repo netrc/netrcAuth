@@ -5,22 +5,7 @@ const port = process.env.PORT || 8080
 
 const cache = require('./cache');
 const auth = require('./auth');
-
-const idHandler = (db,t) => (req, res) => { // to make app.get handlers
-  //console.log(`${t}: ${req.params.id}`)
-  if (!req.params.id) { // return all
-    res.json(db.data[t])
-  } else {
-    const n = req.params.id
-    if (db.data[t][n] != null) { // return if available
-      res.json([ db.data[t][n] ])
-    } else {
-      res.status(404).json({error: `can't find: ${n}`})
-    }
-  }
-}
-
-const ustatus = s => u => (u.status==s)
+const v = require('./vlcbdb');
 
 const main = async () => { 
   const authBase = await auth.init( { baseKey: process.env.AIRTABLE_USERS_KEY } ).catch( err => console.error(err) )
@@ -29,7 +14,8 @@ const main = async () => {
   await db.refresh() // and updates cache stats
 
   app.get('/check', (req, res) => {
-    res.json({ calledBy: "check", ...db.info });
+    const rcode = db.info.status=='ok' ? 200 : 503
+    res.status(rcode).json({ calledBy: "check", ...db.info });
   });
   app.get('/reload', async (req, res) => {
     await db.refresh() // and updates cache stats
@@ -50,10 +36,9 @@ const main = async () => {
     res.status(ret.code).json({ calledBy: "/signon", error: ret.err });
   });
 
-  app.get('/churches/:id?', idHandler(db,'churches'))
-  app.get('/brasses/:id?', idHandler(db,'brasses'))
-  app.get('/rubbings/:id?', idHandler(db,'rubbings'))
-  app.get('/pictures/:id?', idHandler(db,'pictures'))
+  v.tables.forEach( t => { // simple handler for each table
+    app.get(`/${t}/:id?`, db.h.idHandler(db,t)) 
+  })
 
   const server = app.listen(port, '0.0.0.0');
 
