@@ -22,7 +22,10 @@ const init = opts => {
       lastStart: new Date(),
       cacheStatus: "not initialized"
     },
-    base: db.setBase( opts.baseKey )
+    base: db.setBase( opts.baseKey ),
+    h: { // enable index.js to access the handlers
+      idHandler: db.idHandler
+    }
   }
   c.refresh = refresh(c)
   return c
