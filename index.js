@@ -1,43 +1,73 @@
 
 const express = require('express')
+const cookieParser = require('cookie-parser')
 const app = express()
 const port = process.env.PORT || 8080
 
-const cache = require('./cache');
 const auth = require('./auth');
-const v = require('./vlcbdb');
+const c3cookie = require('./c3cookie.js')
+const vlcbdb = require('./vlcbdb');
+const appName = 'vlcb2'
+
+const cookieDecrypt = (req, res, next) => {
+  console.log('check cookies: ', req.cookies)
+console.log('cd: ', req.cookies[appName])
+  req.c3auth = null
+  if ( ! JSON.stringify({...req.cookies})=='{}' ) { // cuz r.c is Object.create(null)
+    const authInfo = req.cookies[appName].split('|')
+console.log('cd ai: ', authInfo)
+    // if this looks like a good  appName cookie
+    // decode the groups
+    // req.c3auth = c3cookie.decryptFromCookie(
+    req.c3auth = { user: authInfo[1], groups: authInfo[2].split(',') }
+  }
+  next()
+}
 
 const main = async () => { 
-  const authBase = await auth.init( { baseKey: process.env.AIRTABLE_USERS_KEY } ).catch( err => console.error(err) )
+  app.use(cookieParser()) 
+
+  const authBase = await auth.init().catch( err => console.error(err) )
+
+app.use(cookieDecrypt) // gets user/groups as encoded in cookie
   
-  const db = cache.init( { baseKey: process.env.AIRTABLE_VLCB_KEY } )
-  await db.refresh() // and updates cache stats
+  const v = vlcbdb.init( { baseKey: process.env.AIRTABLE_VLCB_KEY } )
+  await v.refresh() // and updates cache stats
 
   app.get('/check', (req, res) => {
-    const rcode = db.info.status=='ok' ? 200 : 503
-    res.status(rcode).json({ calledBy: "check", ...db.info });
+    const rcode = v.status=='ok' ? 200 : 503
+    
+    console.log('check groups')
+    console.dir(req.c3auth)
+    res.status(rcode).json({ calledBy: "check", ...v.info });
   });
   app.get('/reload', async (req, res) => {
-    await db.refresh() // and updates cache stats
-    res.json({ calledBy: "reload", ...db.info });
+    await v.refresh() // and updates cache stats
+    res.json({ calledBy: "reload", ...v.info });
   });
+
   app.get('/signon', async (req, res) => { // username, pwd in header
     const user = req.header('user') 
     const pwd = req.header('pwd') 
-
     const ret = { code: 401, err: '' }
+
     ret.err += (!user) ?  'missing user; ' : ''
     ret.err += (!pwd)  ?  'missing pwd; ' : ''
-
     if (ret.err == '') { // good enough to check
       ret.code = await authBase.checkPwd(user,pwd)
+      if (ret.code==200) {
+        //const cookie = ? c3cookie.set( user, groups )
+  console.log('cookie: ', cookie)
+        const expDate = new Date( Date.now() + 25*60*60 ) // in seconds (!not ms)
+        res.cookie(appName, cookie, { expires: expDate })
+      }
     }
 
     res.status(ret.code).json({ calledBy: "/signon", error: ret.err });
   });
 
   v.tables.forEach( t => { // simple handler for each table
-    app.get(`/${t}/:id?`, db.h.idHandler(db,t)) 
+    app.get(`/${t}/:id?`, v.idHandler(t)) 
   })
 
   const server = app.listen(port, '0.0.0.0');
