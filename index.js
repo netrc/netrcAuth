@@ -9,27 +9,12 @@ const c3cookie = require('./c3cookie.js')
 const vlcbdb = require('./vlcbdb');
 const appName = 'vlcb2'
 
-const cookieDecrypt = (req, res, next) => {
-  console.log('check cookies: ', req.cookies)
-console.log('cd: ', req.cookies[appName])
-  req.c3auth = null
-  if ( ! JSON.stringify({...req.cookies})=='{}' ) { // cuz r.c is Object.create(null)
-    const authInfo = req.cookies[appName].split('|')
-console.log('cd ai: ', authInfo)
-    // if this looks like a good  appName cookie
-    // decode the groups
-    // req.c3auth = c3cookie.decryptFromCookie(
-    req.c3auth = { user: authInfo[1], groups: authInfo[2].split(',') }
-  }
-  next()
-}
-
 const main = async () => { 
   app.use(cookieParser()) 
+  app.use(c3cookie.cookieDecrypt(appName)) // gets user/groups as encoded in cookie
 
   const authBase = await auth.init().catch( err => console.error(err) )
 
-app.use(cookieDecrypt) // gets user/groups as encoded in cookie
   
   const v = vlcbdb.init( { baseKey: process.env.AIRTABLE_VLCB_KEY } )
   await v.refresh() // and updates cache stats
