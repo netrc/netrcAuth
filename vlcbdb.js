@@ -28,7 +28,6 @@ const init = () => {
   return {
     tables,
     refresh: c.refresh,
-    status: c.info.status,
     info: c.info,
     idHandler: idHandler(c)
   }

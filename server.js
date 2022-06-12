@@ -19,7 +19,7 @@ const makeApp = async appName => {
   await v.refresh() // and updates cache stats
 
   app.get('/check', (req, res) => {
-    const rcode = v.status=='ok' ? 200 : 503
+    const rcode = v.info.cacheStatus=='ok' ? 200 : 503
     console.log('check groups'); console.dir(req.c3auth)
     res.status(rcode).json({ calledBy: "check", ...v.info });
   });
