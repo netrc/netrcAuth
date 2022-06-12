@@ -1,3 +1,4 @@
+
 /*
  Auth
 
@@ -8,19 +9,14 @@
 * subsequent calls will send token, decrypt cookie
 * for whatever calls are needed, check name/roles
 */
+
 const db = require('./db.js')
 const bcrypt = require('bcrypt')
 
-const SALT_ROUNDS = 10
-const AUTH_BASE_KEY = process.env.AIRTABLE_USERS_KEY
-const DB_USERS_TABLE_NAME = 'users'
-
-const cookie = x => {
-}
-
 const setPwd = async (base, p,u) => { 
   console.log('setPwd: u: ',u,' p: ',p, )
-  const hash = await bcrypt.hash(p, SALT_ROUNDS).catch( err => console.error(err) )
+  const saltRounds = 10
+  const hash = await bcrypt.hash(p, saltRounds).catch( err => console.error(err) )
   console.log('setpwd - newPwd: ', p, ' hash: ', hash)
 
   const v = {
@@ -40,12 +36,12 @@ const setPwd = async (base, p,u) => {
   return 200
 }
 
-const checkPwd = self => async (uname,pwd,udb) => {
+const checkPwd = (base, users) => async (uname,pwd,udb) => {
   console.log('checkPwd: uname: ',uname,' pwd: ',pwd)
   let rcode = 999
 
-  const u = self.users[uname]
-  console.log('... auth.checkPwd u:', u)
+  const u = users[uname]
+console.log('... auth.checkPwd u:', u)
   // only one of the following three if-clauses will be run
   if (! u) { 
     console.log('user not found: ', uname) 
@@ -57,20 +53,13 @@ const checkPwd = self => async (uname,pwd,udb) => {
     rcode = match ? 200 : 401
   }
   if ( u && u.status == 'init' ) {
-    console.log('... auth resetting')
-    const r = await setPwd(self.base,pwd,u)
-    await _reload(self)
+    const r = await setPwd(base,pwd,u)
     console.log('----setpwd')
     console.dir(r)
     rcode = 200
   }
 
   return rcode
-}
-
-const _reload = async self => {
-  self.usersRaw = await self.base.getAll(DB_USERS_TABLE_NAME)
-  self.users = Object.keys(self.usersRaw).reduce( _fromRefToUser(self.usersRaw), {} )
 }
 
 const _fromRefToUser = uRaw => (a,c) => { 
@@ -81,16 +70,17 @@ const _fromRefToUser = uRaw => (a,c) => {
 }
 
 const init = async ( opts ) => { 
-  //console.log('auth init', opts.baseKey)
-  const self = {
-    base: db.setBase(AUTH_BASE_KEY),
-    usersRaw: null,
-    users: null
+  const baseKey = process.env.AIRTABLE_USERS_KEY 
+  if (! baseKey ) { 
+    console.error('no AIRTABLE_USERS_KEY')
+    process.exit(1)
   }
-  await _reload(self)
+  const base = db.setBase(baseKey)
+  const usersRaw = await base.getAll('users')
+  const users = Object.keys(usersRaw).reduce( _fromRefToUser(usersRaw), {} )
 
   return {
-    checkPwd: checkPwd(self)
+    checkPwd: checkPwd(base,users)
   }
 }
 
