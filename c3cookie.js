@@ -38,13 +38,12 @@ console.dir(h)
   return decrypt(h)
 }
 
-const setCookie = appName => (username, user) => {
-// set cookie on get signup
-  const cookieRaw = appName + '|' + username + "|" + user.groups
+const setCookie = (appName, user) => {
+  const cookieRaw = appName + '|' + user.username + "|" + user.groups
   console.log('cookieRaw: ',cookieRaw)
   const cookie = encryptToCookie(cookieRaw)
   console.log('cookiestr',cookie)
-  r = { username: username, groups: user.groups, cookie: cookie }
+  r = { username: user.username, groups: user.groups, cookie: cookie }
   return r
 }
 
@@ -69,4 +68,5 @@ module.exports = {
     encryptToCookie,
     decryptFromCookie,
     cookieDecrypt,
+    setCookie
 }

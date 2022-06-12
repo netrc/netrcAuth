@@ -36,30 +36,31 @@ const setPwd = async (base, p,u) => {
   return 200
 }
 
-const checkPwd = (base, users) => async (uname,pwd,udb) => {
+const checkPwd = (base, users) => async (uname,pwd) => {
   console.log('checkPwd: uname: ',uname,' pwd: ',pwd)
-  let rcode = 999
+  const r = { code: 999, user: null }
 
-  const u = users[uname]
-console.log('... auth.checkPwd u:', u)
+  r.user = users[uname]
+console.log('... auth.checkPwd u:', r.user)
   // only one of the following three if-clauses will be run
-  if (! u) { 
+  if (! r.user) { 
     console.log('user not found: ', uname) 
-    rcode = 401
+    r.code = 401
   } 
-  if ( u && u.status == 'ok' ) {
-    const match = await bcrypt.compare(pwd,u.pwdhash)
+  if ( r.user && r.user.status == 'ok' ) {
+    const match = await bcrypt.compare(pwd,r.user.pwdhash)
     console.log('match: ', match)
-    rcode = match ? 200 : 401
+    r.code = match ? 200 : 401
   }
-  if ( u && u.status == 'init' ) {
-    const r = await setPwd(base,pwd,u)
+  if ( r.user && r.user.status == 'init' ) {
+    const p = await setPwd(base,pwd,r.user)
+// what is p
     console.log('----setpwd')
     console.dir(r)
-    rcode = 200
+    r.code = 200
   }
 
-  return rcode
+  return r
 }
 
 const _fromRefToUser = uRaw => (a,c) => { 

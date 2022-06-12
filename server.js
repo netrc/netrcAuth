@@ -35,12 +35,13 @@ const makeApp = async appName => {
     ret.err += (!user) ?  'missing user; ' : ''
     ret.err += (!pwd)  ?  'missing pwd; ' : ''
     if (ret.err == '') { // good enough to check
-      ret.code = await authBase.checkPwd(user,pwd)
-      if (ret.code==200) {
-        //const cookie = ? c3cookie.set( user, groups )
-  console.log('cookie: ', cookie)
+      const r = await authBase.checkPwd(user,pwd)
+      ret.code = r.code
+      if (r.code==200) {
+        const c = c3cookie.setCookie(appName,r.user)
+        console.log('signon cookie: ', c)
         const expDate = new Date( Date.now() + 25*60*60 ) // in seconds (!not ms)
-        res.cookie(appName, cookie, { expires: expDate })
+        res.cookie(appName, c.cookie, { expires: expDate })
       }
     }
 
