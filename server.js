@@ -1,7 +1,6 @@
 
 const express = require('express')
 const cookieParser = require('cookie-parser')
-const port = process.env.PORT || 8080
 
 const auth = require('./auth');
 const c3cookie = require('./c3cookie.js')
@@ -56,6 +55,7 @@ const makeApp = async appName => {
 
 const main = async () => {
   const app = await makeApp('vlcb2')
+  const port = process.env.PORT || 8080
   const server = app.listen(port, '0.0.0.0');
   process.on('SIGTERM', () => {
     server.close( () => { console.log('SIGTERM received: server closed') })
