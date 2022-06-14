@@ -27,14 +27,12 @@ const encryptToCookie = s => {
 }
 
 const decryptFromCookie = c => {
-console.dir(c)
   const [ iv, content ] = c.split('|')
   if ( iv=="none" || !content ) {
     console.log('decrypt cookie - nothing')
     return ''
   }
   const h = { iv, content }
-console.dir(h)
   return decrypt(h)
 }
 
@@ -48,16 +46,14 @@ const setCookie = (appName, user) => {
 }
 
 const cookieDecrypt = appName => (req, res, next) => { // express middleware
-  console.log('check cookies: ', req.cookies)
-console.log('cd: ', req.cookies[appName])
-  req.c3auth = null
-  if ( ! JSON.stringify({...req.cookies})=='{}' ) { // cuz r.c is Object.create(null)
-    const authInfo = req.cookies[appName].split('|')
-console.log('cd ai: ', authInfo)
-    // if this looks like a good  appName cookie
-    // decode the groups
-    // req.c3auth = c3cookie.decryptFromCookie(
-    req.c3auth = { user: authInfo[1], groups: authInfo[2].split(',') }
+  //console.log('check cookies: ', req.cookies)
+  req.c3auth = null // our auth answer is stored in req
+  // r.c is an odd object; is Object.create(null)
+  if ( Object.keys(req.cookies).length>0 && req.cookies[appName] ) { 
+    const cookiePipe = decryptFromCookie(req.cookies[appName])
+    console.log("...cp... ", cookiePipe)
+    const authInfo = cookiePipe.split('|')
+    req.c3auth = { appName: authInfo[0], user: authInfo[1], groups: authInfo[2].split(',') }
   }
   next()
 }
