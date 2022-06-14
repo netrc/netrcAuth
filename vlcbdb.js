@@ -3,10 +3,9 @@ const cache = require('./cache')
 
 const tables = ['churches', 'brasses', 'rubbings', 'pictures']
 
-
-const refresh = () => cache.refresh()
-const status = () => cache.info.status
-const info = () => cache.info
+const refresh = c => () => c.refresh()
+//const status = c => () => c.info.status
+const info = c => () => c.info
 
 const idHandler = db => t => (req, res) => { // to make app.get handlers
   //console.log(`${t}: ${req.params.id}`)
@@ -22,13 +21,12 @@ const idHandler = db => t => (req, res) => { // to make app.get handlers
   }
 }
 
-
 const init = () => {
   const c = cache.init( { baseKey: process.env.AIRTABLE_VLCB_KEY } )
   return {
     tables,
-    refresh: c.refresh,
-    info: c.info,
+    refresh: refresh(c),
+    info: info(c),
     idHandler: idHandler(c)
   }
 }
