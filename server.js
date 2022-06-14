@@ -2,9 +2,9 @@
 const express = require('express')
 const cookieParser = require('cookie-parser')
 
-const auth = require('./auth');
+const auth = require('./auth')
 const c3cookie = require('./c3cookie.js')
-const vlcbdb = require('./vlcbdb');
+const vlcbdb = require('./vlcbdb')
 
 const makeApp = async appName => { 
   const app = express()
@@ -18,14 +18,15 @@ const makeApp = async appName => {
   await v.refresh() // and updates cache stats
 
   app.get('/check', (req, res) => {
-    const rcode = v.info.cacheStatus=='ok' ? 200 : 503
+    const info = v.info()
+    const rcode = info.cacheStatus=='ok' ? 200 : 503
     console.log('check groups'); console.dir(req.c3auth)
-    res.status(rcode).json({ calledBy: "check", ...v.info });
-  });
+    res.status(rcode).json({ calledBy: "check", ...info })
+  })
   app.get('/reload', async (req, res) => {
     await v.refresh() // and updates cache stats
-    res.json({ calledBy: "reload", ...v.info });
-  });
+    res.json({ calledBy: "reload", ...v.info })
+  })
 
   app.get('/signon', async (req, res) => { // username, pwd in header
     const user = req.header('user') 
@@ -45,8 +46,17 @@ const makeApp = async appName => {
       }
     }
 
-    res.status(ret.code).json({ calledBy: "/signon", error: ret.err });
-  });
+    res.status(ret.code).json({ calledBy: "/signon", error: ret.err })
+  })
+
+  app.get('/access', async (req, res) => {
+console.log('c3auth: ', req.c3auth)
+    if (!req.c3auth) {// automatic from middleware
+      req.c3auth = {}
+    }
+    const code = ('user' in req.c3auth) ? 200 : 401
+    res.status(code).json({ calledBy: 'access', ...req.c3auth }) 
+  })
 
   v.tables.forEach( t => { // simple handler for each table
     app.get(`/${t}/:id?`, v.idHandler(t)) 
@@ -57,7 +67,7 @@ const makeApp = async appName => {
 const main = async () => {
   const app = await makeApp('vlcb2')
   const port = process.env.PORT || 8080
-  const server = app.listen(port, '0.0.0.0');
+  const server = app.listen(port, '0.0.0.0')
   process.on('SIGTERM', () => {
     server.close( () => { console.log('SIGTERM received: server closed') })
   })
