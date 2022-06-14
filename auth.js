@@ -38,7 +38,7 @@ const setPwd = async (base, p,u) => {
 
 const checkPwd = (base, users) => async (uname,pwd) => {
   console.log('checkPwd: uname: ',uname,' pwd: ',pwd)
-  const r = { code: 999, user: null }
+  const r = { code: 999, user: null } // will get returned if status == test
 
   r.user = users[uname]
 console.log('... auth.checkPwd u:', r.user)
@@ -81,7 +81,8 @@ const init = async ( opts ) => {
   const users = Object.keys(usersRaw).reduce( _fromRefToUser(usersRaw), {} )
 
   return {
-    checkPwd: checkPwd(base,users)
+    checkPwd: checkPwd(base,users),
+    _users: users // used for testing
   }
 }
 
