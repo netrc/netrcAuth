@@ -1,10 +1,26 @@
 
 const cache = require('./cache')
 
-const tables = ['churches', 'brasses', 'rubbings', 'pictures']
+const airtableNames = {
+  churches: 'Churches',
+  brasses: 'Brasses',
+  rubbings: 'Rubbings',
+  pictures: 'Pictures',
+  notes: 'Notes'
+}
 
-const refresh = c => () => c.refresh()
-//const status = c => () => c.info.status
+const tables = () => Object.keys(airtableNames) 
+
+const refresh = c => async () => {
+  // all the inner awaits come out as promises which need their own await
+  await Promise.all( tables().map( async t => {
+    c.data[t] = await c.base.getAll(airtableNames[t]).catch( err => console.error(err) )
+  }) )
+
+  // if ok...
+  c.refresh()
+}
+
 const info = c => () => c.info
 
 const idHandler = db => t => (req, res) => { // to make app.get handlers
@@ -21,18 +37,22 @@ const idHandler = db => t => (req, res) => { // to make app.get handlers
   }
 }
 
+const setEndpoints = c => app => {
+  tables().forEach( t => { // simple handler for each table
+    app.get(`/${t}/:id?`, idHandler(c)(t)) 
+  })
+  // other endpoints?
+}
+
 const init = () => {
   const c = cache.init( { baseKey: process.env.AIRTABLE_VLCB_KEY } )
   return {
-    tables,
     refresh: refresh(c),
     info: info(c),
-    idHandler: idHandler(c)
+    setEndpoints: setEndpoints(c)
   }
 }
 
 module.exports = {
-  init
+  init,
 }
-  
-//  c.data.churches = await c.base.getAll('Churches').catch( err => console.error(err) )

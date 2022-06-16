@@ -5,14 +5,10 @@ const db = require('./db.js')
 const oLenReducer = cd => (a,c) => { z = {}; z[c] = Object.keys(cd[c]).length; return { ...a, ...z } }
 
 const refresh = c => async () => {
-  c.data.churches = await c.base.getAll('Churches').catch( err => console.error(err) )
-  c.data.brasses = await c.base.getAll('Brasses').catch( err => console.error(err) )
-  c.data.rubbings = await c.base.getAll('Rubbings').catch( err => console.error(err) )
-  c.data.pictures = await c.base.getAll('Pictures').catch( err => console.error(err) )
-
   c.info.cacheStatus = "ok"
   c.info.cacheLast = new Date()
   c.info.stats = Object.keys(c.data).reduce( oLenReducer(c.data), {} )
+console.log(c.info)
 }
 
 const init = opts => {
