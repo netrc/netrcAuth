@@ -50,7 +50,7 @@ const makeApp = async appName => {
   })
 
   app.get('/access', async (req, res) => {
-console.log('c3auth: ', req.c3auth)
+    console.log('c3auth: ', req.c3auth)
     if (!req.c3auth) {// automatic from middleware
       req.c3auth = {}
     }
@@ -58,9 +58,8 @@ console.log('c3auth: ', req.c3auth)
     res.status(code).json({ calledBy: 'access', ...req.c3auth }) 
   })
 
-  v.tables.forEach( t => { // simple handler for each table
-    app.get(`/${t}/:id?`, v.idHandler(t)) 
-  })
+  v.setEndpoints(app)
+
   return app
 }
 
