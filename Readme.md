@@ -2,7 +2,7 @@
 
 # c3
 
-simple cache framework (for vlcb) 
+simple cache framework (for vlcb; others?) 
 
 really, an auth API for write access to the db
 
