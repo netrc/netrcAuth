@@ -23,9 +23,20 @@ const refresh = c => async () => {
 
 const info = c => () => c.info
 
+const findDbField = (d, f, n) => { // d = { refNNNN: { name: 'abcd', ...rest }, ... }
+  return Object.keys(d).filter( x => d[x][f]==n ).map( k => d[k] )
+}
+
+// similar for text search
+  
+
 const idHandler = db => t => (req, res) => { // to make app.get handlers
   //console.log(`${t}: ${req.params.id}`)
-  if (!req.params.id) { // return all
+  if (req.query && req.query.name) {
+console.log(`idHandler: req.query.name ${req.query.name}`)
+    const r = findDbField(db.data[t], 'name', req.query.name)
+    res.json(r)
+  } else if (!req.params.id) { // return all
     res.json(db.data[t])
   } else {
     const n = req.params.id
